@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"./cmd"
+	"github.com/yujiteshima/qi/cmd"
 
 	"github.com/urfave/cli"
 )
@@ -16,29 +16,15 @@ func main() {
 
 	app.Commands = []cli.Command{
 		{
-			Name:  "mine",
+			Name:  "myqi",
 			Usage: "qiita + mine : you get yours articles",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "example, e",
-					Value: "exmple",
-					Usage: "This help text is example",
-				},
-			},
 			Action: func(c *cli.Context) error {
-				//fmt.Println("Hello friend!")
 				qiitaToken := os.Getenv("QIITA_TOKEN")
-				// Debug用 fmt.Println(qiitaToken)
-				//id_ary := getId()
-				datas := cmd.FetchQiitaData(qiitaToken)
+				datas := cmd.FetchMyQiitaData(qiitaToken)
 				cmd.OutputQiitaData(datas)
 				return nil
 			},
 		},
 	}
 	app.Run(os.Args)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 }

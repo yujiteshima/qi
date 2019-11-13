@@ -11,15 +11,14 @@ import (
 // jsonをパースする為の構造体を定義する
 
 type Data struct {
-	ID         string `json:id`
-	Url        string `json:"url"`
-	Title      string `json:"title"`
-	LikesCount int    `json:"likes_count"`
-	//ReactionsCount int    `json:"reactions_count"`
-	PageViewsCount int `json:"page_views_count"`
+	ID             string `json:id`
+	Url            string `json:"url"`
+	Title          string `json:"title"`
+	LikesCount     int    `json:"likes_count"`
+	PageViewsCount int    `json:"page_views_count"`
 }
 
-func FetchQiitaData(accessToken string) []Data {
+func FetchMyQiitaData(accessToken string) []Data {
 	baseUrl := "https://qiita.com/api/v2/items?query=user:yujiteshima"
 	// 様々な検索条件をかけるときはbaseUrlをv2/までにして他を変数で定義してurl.Parseで合体させる
 	endpointURL, err := url.Parse(baseUrl)
@@ -38,6 +37,7 @@ func FetchQiitaData(accessToken string) []Data {
 	// accessトークンは環境変数に入れておく。自分の場合は.bash_profileにexport文を書いている。
 
 	if len(accessToken) > 0 {
+		// QiitaAPIにリクエストを送ってレスポンスをrespに格納する。
 		resp, err = http.DefaultClient.Do(&http.Request{
 			URL:    endpointURL,
 			Method: "GET",
@@ -75,7 +75,7 @@ func FetchQiitaData(accessToken string) []Data {
 		return nil
 	}
 
-	/*********************************************************************************/
+	/************************************一覧取得では、ページビューがnilになるので個別で取りに行ってデータを得る*********************************************/
 	for i, val := range datas {
 		//fmt.Println("id:", val.ID)
 		article_id := val.ID
@@ -114,8 +114,6 @@ func FetchQiitaData(accessToken string) []Data {
 			fmt.Println("JSON Unmarshal error:", err)
 			return nil
 		}
-
-		//fmt.Println(m["page_views_count"])
 		datas[i].PageViewsCount = int(m["page_views_count"].(float64))
 	}
 	return datas

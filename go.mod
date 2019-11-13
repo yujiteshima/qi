@@ -1,4 +1,4 @@
-module github.com/yujiteshima/qiita
+module github.com/yujiteshima/qi
 
 go 1.13
 
