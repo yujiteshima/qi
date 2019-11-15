@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 
 	"github.com/yujiteshima/qi/cmd"
@@ -20,7 +21,12 @@ func main() {
 			Usage: "qiita + mine : you get yours articles",
 			Action: func(c *cli.Context) error {
 				qiitaToken := os.Getenv("QIITA_TOKEN")
-				data, err := cmd.FetchMyQiitaData(qiitaToken)
+				qiitaUser := os.Getenv("QIITA_USER")
+				if qiitaUser == "" {
+					return errors.New("$QIITA_USER must be set")
+				}
+
+				data, err := cmd.FetchMyQiitaData(qiitaToken, qiitaUser)
 				if err != nil {
 					return err
 				}

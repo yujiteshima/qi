@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-const baseURL = "https://qiita.com/api/v2/items?query=user:yujiteshima"
+const baseURL = "https://qiita.com/api/v2/items"
 
 // jsonをパースする為の構造体を定義する
 
@@ -19,7 +19,7 @@ type Data struct {
 	PageViewsCount int    `json:"page_views_count"`
 }
 
-func FetchMyQiitaData(accessToken string) ([]Data, error) {
+func FetchMyQiitaData(accessToken string, qiitaUser string) ([]Data, error) {
 	b, err := json.Marshal(Data{})
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func FetchMyQiitaData(accessToken string) ([]Data, error) {
 	// 2パターン作っておく。
 	// accessトークンは環境変数に入れておく。自分の場合は.bash_profileにexport文を書いている。
 
-	req, err := http.NewRequest(http.MethodGet, baseURL, nil)
+	req, err := http.NewRequest(http.MethodGet, baseURL+"?query=user:"+qiitaUser, nil)
 	if err != nil {
 		return nil, err
 	}
