@@ -38,27 +38,21 @@ func FetchMyQiitaData(accessToken string) ([]Data, error) {
 	// 2パターン作っておく。
 	// accessトークンは環境変数に入れておく。自分の場合は.bash_profileにexport文を書いている。
 
-	if len(accessToken) > 0 {
-		// QiitaAPIにリクエストを送ってレスポンスをrespに格納する。
-		resp, err = http.DefaultClient.Do(&http.Request{
-			URL:    endpointURL,
-			Method: "GET",
-			Header: http.Header{
-				"Content-Type":  {"application/json"},
-				"Authorization": {"Bearer " + accessToken},
-			},
-		})
-	} else {
-		fmt.Println("***** Access Token 無しでQiitaAPIを叩いています アクセス制限に注意して下さい*****")
-
-		resp, err = http.DefaultClient.Do(&http.Request{
-			URL:    endpointURL,
-			Method: "GET",
-			Header: http.Header{
-				"Content-Type": {"application/json"},
-			},
-		})
+	headers := http.Header{
+		"Content-Type": {"application/json"},
 	}
+
+	if len(accessToken) > 0 {
+		fmt.Println("***** Access Token 無しでQiitaAPIを叩いています アクセス制限に注意して下さい*****")
+		headers.Set("Authorization", "Bearer "+accessToken)
+	}
+
+	// QiitaAPIにリクエストを送ってレスポンスをrespに格納する。
+	resp, err = http.DefaultClient.Do(&http.Request{
+		URL:    endpointURL,
+		Method: "GET",
+		Header: headers,
+	})
 	defer resp.Body.Close()
 
 	if err != nil {
