@@ -53,11 +53,10 @@ func FetchMyQiitaData(accessToken string) ([]Data, error) {
 		Method: "GET",
 		Header: headers,
 	})
-	defer resp.Body.Close()
-
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	b, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
