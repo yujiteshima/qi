@@ -64,11 +64,6 @@ func FetchMyQiitaData(accessToken string) ([]Data, error) {
 	for i, val := range data {
 		itemsURL := "https://qiita.com/api/v2/items/" + val.ID
 
-		b, err := json.Marshal(Data{})
-		if err != nil {
-			return nil, err
-		}
-
 		req, err := http.NewRequest(http.MethodGet, itemsURL, nil)
 		if err != nil {
 			return nil, err
