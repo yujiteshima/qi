@@ -11,7 +11,7 @@ import (
 // jsonをパースする為の構造体を定義する
 
 type Data struct {
-	ID             string `json:id`
+	ID             string `json:"id"`
 	Url            string `json:"url"`
 	Title          string `json:"title"`
 	LikesCount     int    `json:"likes_count"`
