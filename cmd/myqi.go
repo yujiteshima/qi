@@ -20,16 +20,17 @@ type Data struct {
 	PageViewsCount int    `json:"page_views_count"`
 }
 
-func FetchMyQiitaData(accessToken string) []Data {
+func FetchMyQiitaData(accessToken string) ([]Data, error) {
+
 	// 様々な検索条件をかけるときはbaseUrlをv2/までにして他を変数で定義してurl.Parseで合体させる
 	endpointURL, err := url.Parse(baseUrl)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	b, err := json.Marshal(Data{})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	var resp = &http.Response{}
@@ -48,7 +49,7 @@ func FetchMyQiitaData(accessToken string) []Data {
 			},
 		})
 	} else {
-		fmt.Println("***** Access Token 無しでQiiitaAPIを叩いています アクセス制限に注意して下さい*****")
+		fmt.Println("***** Access Token 無しでQiitaAPIを叩いています アクセス制限に注意して下さい*****")
 
 		resp, err = http.DefaultClient.Do(&http.Request{
 			URL:    endpointURL,
@@ -61,34 +62,33 @@ func FetchMyQiitaData(accessToken string) []Data {
 	defer resp.Body.Close()
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	b, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	var data []Data
 
 	if err := json.Unmarshal(b, &data); err != nil {
-		fmt.Println("JSON Unmarshal error:", err)
-		return nil
+		return nil, fmt.Errorf("JSON Unmarshal error: %w", err)
 	}
 
-	/************************************一覧取得では、ページビューがnilになるので個別で取りに行ってデータを得る*********************************************/
+	/*********一覧取得では、ページビューがnilになるので個別で取りに行ってデータを得る*****************/
 	for i, val := range data {
-		//fmt.Println("id:", val.ID)
+
 		article_id := val.ID
 		baseUrl := "https://qiita.com/api/v2/items/"
 		endpointURL2, err := url.Parse(baseUrl + article_id)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		b, err := json.Marshal(Data{})
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		resp, err = http.DefaultClient.Do(&http.Request{
@@ -101,23 +101,23 @@ func FetchMyQiitaData(accessToken string) []Data {
 		})
 
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		b, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		var m map[string]interface{}
 
 		if err := json.Unmarshal(b, &m); err != nil {
-			fmt.Println("JSON Unmarshal error:", err)
-			return nil
+			return nil, fmt.Errorf("JSON Unmarshal error: %w", err)
 		}
+
 		data[i].PageViewsCount = int(m["page_views_count"].(float64))
 	}
-	return data
+	return data, nil
 }
 
 // データの出力
