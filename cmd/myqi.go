@@ -92,7 +92,11 @@ func FetchMyQiitaData(accessToken string) ([]Data, error) {
 			return nil, fmt.Errorf("JSON Unmarshal error: %w", err)
 		}
 
-		data[i].PageViewsCount = int(m["page_views_count"].(float64))
+		if v, ok := m["page_views_count"]; ok {
+			if count, ok := v.(float64); ok {
+				data[i].PageViewsCount = int(count)
+			}
+		}
 	}
 	return data, nil
 }
