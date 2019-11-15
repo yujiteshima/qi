@@ -5,129 +5,110 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 )
 
-// jsonをパースする為の構造体を定義する
+const baseURL = "https://qiita.com/api/v2/items"
 
+// Data は jsonをパースする為の構造体です
 type Data struct {
-	ID             string `json:id`
-	Url            string `json:"url"`
+	ID             string `json:"id"`
+	URL            string `json:"url"`
 	Title          string `json:"title"`
 	LikesCount     int    `json:"likes_count"`
 	PageViewsCount int    `json:"page_views_count"`
 }
 
-func FetchMyQiitaData(accessToken string) []Data {
-	baseUrl := "https://qiita.com/api/v2/items?query=user:yujiteshima"
-	// 様々な検索条件をかけるときはbaseUrlをv2/までにして他を変数で定義してurl.Parseで合体させる
-	endpointURL, err := url.Parse(baseUrl)
-	if err != nil {
-		panic(err)
-	}
-
+// FetchMyQiitaData は accessToken を使用して qiitaUser の記事一覧を取得します
+func FetchMyQiitaData(accessToken string, qiitaUser string) ([]Data, error) {
 	b, err := json.Marshal(Data{})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	var resp = &http.Response{}
 	// qiitaのアクセストークンがない場合はAuthorizationを付与しない
 	// 2パターン作っておく。
 	// accessトークンは環境変数に入れておく。自分の場合は.bash_profileにexport文を書いている。
 
-	if len(accessToken) > 0 {
-		// QiitaAPIにリクエストを送ってレスポンスをrespに格納する。
-		resp, err = http.DefaultClient.Do(&http.Request{
-			URL:    endpointURL,
-			Method: "GET",
-			Header: http.Header{
-				"Content-Type":  {"application/json"},
-				"Authorization": {"Bearer " + accessToken},
-			},
-		})
-	} else {
-		fmt.Println("***** Access Token 無しでQiiitaAPIを叩いています アクセス制限に注意して下さい*****")
+	req, err := http.NewRequest(http.MethodGet, baseURL+"?query=user:"+qiitaUser, nil)
+	if err != nil {
+		return nil, err
+	}
 
-		resp, err = http.DefaultClient.Do(&http.Request{
-			URL:    endpointURL,
-			Method: "GET",
-			Header: http.Header{
-				"Content-Type": {"application/json"},
-			},
-		})
+	req.Header.Set("content-type", "application/json")
+
+	if len(accessToken) > 0 {
+		fmt.Println("***** Access Token 無しでQiitaAPIを叩いています アクセス制限に注意して下さい*****")
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+	}
+
+	// QiitaAPIにリクエストを送ってレスポンスをrespに格納する。
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if err != nil {
-		panic(err)
-	}
-
 	b, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	var datas []Data
+	var data []Data
 
-	if err := json.Unmarshal(b, &datas); err != nil {
-		fmt.Println("JSON Unmarshal error:", err)
-		return nil
+	if err := json.Unmarshal(b, &data); err != nil {
+		return nil, fmt.Errorf("JSON Unmarshal error: %w", err)
 	}
 
-	/************************************一覧取得では、ページビューがnilになるので個別で取りに行ってデータを得る*********************************************/
-	for i, val := range datas {
-		//fmt.Println("id:", val.ID)
-		article_id := val.ID
-		baseUrl := "https://qiita.com/api/v2/items/"
-		endpointURL2, err := url.Parse(baseUrl + article_id)
+	/*********一覧取得では、ページビューがnilになるので個別で取りに行ってデータを得る*****************/
+	for i, val := range data {
+		itemsURL := "https://qiita.com/api/v2/items/" + val.ID
+
+		req, err := http.NewRequest(http.MethodGet, itemsURL, nil)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
-		b, err := json.Marshal(Data{})
-		if err != nil {
-			panic(err)
+		req.Header.Set("content-type", "application/json")
+		if len(accessToken) > 0 {
+			fmt.Println("***** Access Token 無しでQiitaAPIを叩いています アクセス制限に注意して下さい*****")
+			req.Header.Set("Authorization", "Bearer "+accessToken)
 		}
 
-		resp, err = http.DefaultClient.Do(&http.Request{
-			URL:    endpointURL2,
-			Method: "GET",
-			Header: http.Header{
-				"Content-Type":  {"application/json"},
-				"Authorization": {"Bearer " + accessToken},
-			},
-		})
-
+		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		b, err = ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		var m map[string]interface{}
 
 		if err := json.Unmarshal(b, &m); err != nil {
-			fmt.Println("JSON Unmarshal error:", err)
-			return nil
+			return nil, fmt.Errorf("JSON Unmarshal error: %w", err)
 		}
-		datas[i].PageViewsCount = int(m["page_views_count"].(float64))
+
+		if v, ok := m["page_views_count"]; ok {
+			if count, ok := v.(float64); ok {
+				data[i].PageViewsCount = int(count)
+			}
+		}
 	}
-	return datas
+	return data, nil
 }
 
-// データの出力
-func OutputQiitaData(datas []Data) {
+// OutputQiitaData は取得した記事データを表示します
+func OutputQiitaData(data []Data) {
 	fmt.Println("************************自分のQiita投稿一覧******************************")
-	for _, val := range datas {
+	for _, val := range data {
 		fmt.Printf("%-15v%v%v\n", "ID", ": ", val.ID)
 		fmt.Printf("%-15v%v%v\n", "Title", ": ", val.Title)
 		fmt.Printf("%-12v%v%v\n", "いいね", ": ", val.LikesCount)
 		fmt.Printf("%-9v%v%v\n", "ページビュー", ": ", val.PageViewsCount)
-		fmt.Printf("%-15v%v%v\n", "URL", ": ", val.Url)
+		fmt.Printf("%-15v%v%v\n", "URL", ": ", val.URL)
 		fmt.Println("-------------------------------------------------------------------------")
 	}
 }
