@@ -68,15 +68,15 @@ func FetchMyQiitaData(accessToken string) []Data {
 		panic(err)
 	}
 
-	var datas []Data
+	var data []Data
 
-	if err := json.Unmarshal(b, &datas); err != nil {
+	if err := json.Unmarshal(b, &data); err != nil {
 		fmt.Println("JSON Unmarshal error:", err)
 		return nil
 	}
 
 	/************************************一覧取得では、ページビューがnilになるので個別で取りに行ってデータを得る*********************************************/
-	for i, val := range datas {
+	for i, val := range data {
 		//fmt.Println("id:", val.ID)
 		article_id := val.ID
 		baseUrl := "https://qiita.com/api/v2/items/"
@@ -114,15 +114,15 @@ func FetchMyQiitaData(accessToken string) []Data {
 			fmt.Println("JSON Unmarshal error:", err)
 			return nil
 		}
-		datas[i].PageViewsCount = int(m["page_views_count"].(float64))
+		data[i].PageViewsCount = int(m["page_views_count"].(float64))
 	}
-	return datas
+	return data
 }
 
 // データの出力
-func OutputQiitaData(datas []Data) {
+func OutputQiitaData(data []Data) {
 	fmt.Println("************************自分のQiita投稿一覧******************************")
-	for _, val := range datas {
+	for _, val := range data {
 		fmt.Printf("%-15v%v%v\n", "ID", ": ", val.ID)
 		fmt.Printf("%-15v%v%v\n", "Title", ": ", val.Title)
 		fmt.Printf("%-12v%v%v\n", "いいね", ": ", val.LikesCount)
