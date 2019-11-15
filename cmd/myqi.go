@@ -8,6 +8,8 @@ import (
 	"net/url"
 )
 
+const baseUrl = "https://qiita.com/api/v2/items?query=user:yujiteshima"
+
 // jsonをパースする為の構造体を定義する
 
 type Data struct {
@@ -19,7 +21,6 @@ type Data struct {
 }
 
 func FetchMyQiitaData(accessToken string) []Data {
-	baseUrl := "https://qiita.com/api/v2/items?query=user:yujiteshima"
 	// 様々な検索条件をかけるときはbaseUrlをv2/までにして他を変数で定義してurl.Parseで合体させる
 	endpointURL, err := url.Parse(baseUrl)
 	if err != nil {
