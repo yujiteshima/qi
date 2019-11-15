@@ -21,13 +21,6 @@ type Data struct {
 }
 
 func FetchMyQiitaData(accessToken string) ([]Data, error) {
-
-	// 様々な検索条件をかけるときはbaseUrlをv2/までにして他を変数で定義してurl.Parseで合体させる
-	endpointURL, err := url.Parse(baseUrl)
-	if err != nil {
-		return nil, err
-	}
-
 	b, err := json.Marshal(Data{})
 	if err != nil {
 		return nil, err
@@ -38,21 +31,16 @@ func FetchMyQiitaData(accessToken string) ([]Data, error) {
 	// 2パターン作っておく。
 	// accessトークンは環境変数に入れておく。自分の場合は.bash_profileにexport文を書いている。
 
-	headers := http.Header{
-		"Content-Type": {"application/json"},
-	}
+	req, err := http.NewRequest(http.MethodGet, baseUrl, nil)
+	req.Header.Set("content-type", "application/json")
 
 	if len(accessToken) > 0 {
 		fmt.Println("***** Access Token 無しでQiitaAPIを叩いています アクセス制限に注意して下さい*****")
-		headers.Set("Authorization", "Bearer "+accessToken)
+		req.Header.Set("Authorization", "Bearer "+accessToken)
 	}
 
 	// QiitaAPIにリクエストを送ってレスポンスをrespに格納する。
-	resp, err = http.DefaultClient.Do(&http.Request{
-		URL:    endpointURL,
-		Method: "GET",
-		Header: headers,
-	})
+	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
