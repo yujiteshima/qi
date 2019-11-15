@@ -25,7 +25,7 @@ func FetchMyQiitaData(accessToken string) ([]Data, error) {
 		return nil, err
 	}
 
-	var resp = &http.Response{}
+	var resp *http.Response
 	// qiitaのアクセストークンがない場合はAuthorizationを付与しない
 	// 2パターン作っておく。
 	// accessトークンは環境変数に入れておく。自分の場合は.bash_profileにexport文を書いている。
